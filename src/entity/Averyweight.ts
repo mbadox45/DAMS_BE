@@ -122,7 +122,7 @@ export class t_averyweight {
     @Column({length:10, nullable:true})
     public selisih_netto: string;
 
-    @Column({length:10, nullable:true})
+    @Column({length:100, nullable:true})
     public selisih_netto_persen: string;
 
     @Column({length:10, nullable:true})

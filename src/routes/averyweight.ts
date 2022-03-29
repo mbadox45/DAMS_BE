@@ -12,5 +12,11 @@ router.post('/wb/truck_in', WBController.postTruckIn);
 router.post('/wb/truck_up', WBController.updateTruckIn);
 router.post('/wb/reject', WBController.rejectTicket);
 router.post('/wb/checkout', WBController.checkOutTruck);
+router.post('/wb/exp', WBController.exportData);
+
+router.post('/wb/timbang', WBController.postTimbangan);
+router.post('/wb/truckmasuk', WBController.postTruck);
+router.post('/wb/log', WBController.postLog);
+
 
 export default router;

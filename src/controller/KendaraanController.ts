@@ -46,7 +46,7 @@ class KendaraanController{
                 id_kendaraan: id_kendaraan,
                 no_kendaraan: data.no_kendaraan,
                 kode_angkutan: data.kode_angkutan,
-                tarra: data.tarra
+                tarra: 0
             });
             const logs = await getRepository(t_jenis).create({
                 no_tiket: '-',

@@ -9,6 +9,8 @@ import { t_angkutan } from "../entity/Angkutan";
 import { t_barang } from "../entity/Barang";
 import { v_tiketmax } from "../entity/VMaxTicket";
 import { t_contract } from "../entity/Contract";
+import { t_truksecurity } from "../entity/TruckSecurity";
+import { v_reportsecurity } from "../entity/VReportAdmin";
 
 class WBController{
 
@@ -18,6 +20,7 @@ class WBController{
             const truck = await getRepository(v_truckin).createQueryBuilder()
             .where("status_truck IS NOT NULL")
             .andWhere("status_truck != :id1 AND status_truck != :id2",{id1:4, id2:2})
+            .orderBy("no_tiket", "DESC")
             .getMany();
             res.send({"code":200,"data":truck});
         } catch (e) {
@@ -28,7 +31,7 @@ class WBController{
     
     static getAllTruck = async (req:Request, res:Response, next:NextFunction) => {
         try {
-            const truck = await getRepository(v_truckin).createQueryBuilder().where("user_delete IS NULL").getMany();
+            const truck = await getRepository(v_truckin).createQueryBuilder().where("user_delete IS NULL").orderBy("no_tiket", "DESC").getMany();
             res.send({"code":200,"data":truck});
         } catch (e) {
             res.send({"code":401,"data":{"msg":"Data tidak ada!"}});
@@ -115,7 +118,6 @@ class WBController{
                 delivery_order: data.delivery_order,
                 kode_angkutan: data.kode_angkutan,
                 no_aju: data.no_aju,
-                no_container: data.no_container,
                 asal_pks: data.asal_pks,
                 bruto_from: data.bruto_from,
                 tarra_from: data.tarra_from,
@@ -133,7 +135,7 @@ class WBController{
         }
     }
 
-    static postTruckIn = async (req:Request, res:Response, next:NextFunction) => {
+    static postTimbangan = async(req:Request, res:Response, next:NextFunction) => {
         const data = req.body;
         const tahun = new Date().getFullYear();
         const thn = tahun.toString().slice(2,4);
@@ -145,16 +147,6 @@ class WBController{
             bln = "0"+bulan.toString();
         }
         var value;
-        // const count = await getRepository(v_counttikets).findOne();
-        // if (count.total > 999) {
-        //     value = `0${Number(count.total)+1}`;
-        // }else if (count.total < 100 && count.total > 9) {
-        //     value = `00${Number(count.total)+1}`;
-        // }else if (count.total < 10 && count.total > 0) {
-        //     value = `000${Number(count.total)+1}`;
-        // }else {
-        //     value = (Number(count.total)+1).toString();
-        // }
         const count = await getRepository(v_tiketmax).findOne();
         const c_thn = count.ticket_max.slice(0,2);
         const c_bln = count.ticket_max.slice(2,4);
@@ -168,49 +160,163 @@ class WBController{
         } else {
             no_tiket = thn+bln+'0001';
         }
-        // const no_tiket = thn+bln+value;
+
+        const datatimbangan = {
+            no_tiket: no_tiket,
+            id_kendaraan: data.id_kendaraan,
+            kode_barang: data.kode_barang,
+            nama_supir: data.nama_supir,
+            from_to: data.from_to,
+            quantity: data.quantity,
+            id_contract: data.id_contract,
+            delivery_note: data.delivery_note,
+            delivery_order: data.delivery_order,
+            kode_angkutan: data.kode_angkutan,
+            no_aju: data.no_aju,
+            asal_pks: data.asal_pks,
+            bruto_from: data.bruto_from,
+            tarra_from: data.tarra_from,
+            netto_from: data.netto_from,
+            status_truck: 1,
+            status: '0',
+            created_at: new Date(),
+            user_id:'-',
+            timbang_1:0,
+            timbang_2:0,
+            timbang_selisih:0,
+            tarra_rendah:0,
+            tarra_tinggi:0,
+            tarra_sekarang:'0',
+            tgl_keluar: new Date('0001-01-01'),
+            tgl_masuk: new Date('0001-01-01'),
+            tgl_keluar_from: '2022-01-01 00:00:00',
+            waktu_masuk: '00:00:00',
+        };
         try {
-            const kendaraan = await getRepository(t_kendaraan).findOne({id_kendaraan:data.id_kendaraan});
-            const truck = await getRepository(t_averyweight).create({
-                no_tiket: no_tiket,
-                id_kendaraan: data.id_kendaraan,
-                kode_barang: data.kode_barang,
-                nama_supir: data.nama_supir,
-                from_to: data.from_to,
-                quantity: data.quantity,
-                id_contract: data.id_contract,
-                delivery_note: data.delivery_note,
-                delivery_order: data.delivery_order,
-                kode_angkutan: data.kode_angkutan,
-                no_aju: data.no_aju,
-                no_container: data.no_container,
-                asal_pks: data.asal_pks,
-                bruto_from: data.bruto_from,
-                tarra_from: data.tarra_from,
-                netto_from: data.netto_from,
-                status_truck: 1,
-                status: '0',
-                created_at: new Date(),
-                user_id:'-',
-                timbang_1:0,
-                timbang_2:0,
-                timbang_selisih:0,
-                tarra_rendah:0,
-                tarra_tinggi:0,
-                tgl_keluar: new Date('0001-01-01'),
-                tgl_masuk: new Date('0001-01-01'),
-                tgl_keluar_from: '2022-01-01 00:00:00',
-                waktu_masuk: '00:00:00',
-            });
-            const logs = await getRepository(t_jenis).create({
-                no_tiket: no_tiket,
-                user_id: data.user_id,
-                created_at: new Date(),
-                status: 'Truck Masuk',
-                keterangan: `Truck masuk ${kendaraan.no_kendaraan} di input oleh ${data.user_id}`,
-            });
-            await getRepository(t_averyweight).save(truck);
-            await getRepository(t_jenis).save(logs);
+            await getRepository(t_averyweight).save((await getRepository(t_averyweight).create(datatimbangan)));
+            res.send({"code":200,"data":{"status":true,"msg":"Success !"}});
+        } catch (e) {
+            res.send({"code":401,"data":{"msg":"Data tidak ada!"}});
+        }
+    }
+
+    static postTruck = async (req:Request, res:Response, next:NextFunction) => {
+        const data = req.body;
+        const no_tiket = await getRepository(t_averyweight).findOne();
+        const datatruckmasuk = {
+            no_tiket: no_tiket.no_tiket,
+            petugas_checkin: data.user_id,
+            no_urut:0,
+            waktu_masuktruk: new Date()
+        };
+        try {
+            await getRepository(t_truksecurity).save((await getRepository(t_truksecurity).create(datatruckmasuk)));
+            res.send({"code":200,"data":{"status":true,"msg":"Success !"}});
+        } catch (e) {
+            res.send({"code":401,"data":{"msg":"Data tidak ada!"}});
+        }
+    }
+
+    static postLog = async (req:Request, res:Response, next:NextFunction) => {
+        const data = req.body;
+        const no_tiket = await getRepository(t_averyweight).findOne();
+        const kendaraan = await getRepository(t_kendaraan).findOne({id_kendaraan:data.id_kendaraan});
+        const datalog = {
+            no_tiket: no_tiket.no_tiket,
+            user_id: data.user_id,
+            created_at: new Date(),
+            status: 'Truck Masuk',
+            keterangan: `Truck masuk ${kendaraan.no_kendaraan} di input oleh ${data.user_id}`,
+        }
+        try {
+            await getRepository(t_jenis).save((await getRepository(t_jenis).create(datalog)));
+            res.send({"code":200,"data":{"status":true,"msg":"Success !"}});
+        } catch (e) {
+            res.send({"code":401,"data":{"msg":"Data tidak ada!"}});
+        }
+    }
+
+    static postTruckIn = async (req:Request, res:Response, next:NextFunction) => {
+        const data = req.body;
+        const tahun = new Date().getFullYear();
+        const thn = tahun.toString().slice(2,4);
+        const bulan =  new Date().getMonth()+1;
+        var bln;
+        if (bulan >=10) {
+            bln = bulan.toString();
+        } else {
+            bln = "0"+bulan.toString();
+        }
+        var value;
+        const count = await getRepository(v_tiketmax).findOne();
+        const c_thn = count.ticket_max.slice(0,2);
+        const c_bln = count.ticket_max.slice(2,4);
+        var no_tiket;
+        if (c_thn == thn) {
+            if (c_bln == bln) {
+                no_tiket = (Number(count.ticket_max)+1).toString();
+            } else {
+                no_tiket = thn+bln+'0001';
+            }
+        } else {
+            no_tiket = thn+bln+'0001';
+        }
+        const datatruckmasuk = {
+            no_tiket: no_tiket,
+            petugas_checkin: data.user_id,
+            no_urut:0,
+            waktu_masuktruk: new Date()
+        };
+
+        const datatimbangan = {
+            no_tiket: no_tiket,
+            id_kendaraan: data.id_kendaraan,
+            kode_barang: data.kode_barang,
+            nama_supir: data.nama_supir,
+            from_to: data.from_to,
+            quantity: data.quantity,
+            id_contract: data.id_contract,
+            delivery_note: data.delivery_note,
+            delivery_order: data.delivery_order,
+            kode_angkutan: data.kode_angkutan,
+            no_aju: data.no_aju,
+            asal_pks: data.asal_pks,
+            bruto_from: data.bruto_from,
+            tarra_from: data.tarra_from,
+            netto_from: data.netto_from,
+            status_truck: 1,
+            status: '0',
+            created_at: new Date(),
+            user_id:'-',
+            timbang_1:0,
+            timbang_2:0,
+            timbang_selisih:0,
+            tarra_rendah:0,
+            tarra_tinggi:0,
+            tarra_sekarang:'0',
+            tgl_keluar: new Date('0001-01-01'),
+            tgl_masuk: new Date('0001-01-01'),
+            tgl_keluar_from: '2022-01-01 00:00:00',
+            waktu_masuk: '00:00:00',
+        };
+
+        const kendaraan = await getRepository(t_kendaraan).findOne({id_kendaraan:data.id_kendaraan});
+        const datalog = {
+            no_tiket: no_tiket,
+            user_id: data.user_id,
+            created_at: new Date(),
+            status: 'Truck Masuk',
+            keterangan: `Truck masuk ${kendaraan.no_kendaraan} di input oleh ${data.user_id}`,
+        }
+
+        try {
+            await getRepository(t_jenis).save((await getRepository(t_jenis).create(datalog)));
+            await getRepository(t_averyweight).save((await getRepository(t_averyweight).create(datatimbangan)));
+            await getRepository(t_truksecurity).save((await getRepository(t_truksecurity).create(datatruckmasuk)));
+
+            // await getConnection().createQueryBuilder().insert().into(t_truksecurity).values(datatruckmasuk).execute();
+            // await getConnection().createQueryBuilder().insert().into(t_averyweight).values(datatimbangan).execute();
+            // await getConnection().createQueryBuilder().insert().into(t_jenis).values(datalog).execute();
             res.send({"code":200,"data":{"status":true,"msg":"Success !"}});
         } catch (e) {
             res.send({"code":401,"data":{"msg":"Data tidak ada!"}});
@@ -254,6 +360,18 @@ class WBController{
     static checkOutTruck = async (req:Request, res:Response, next:NextFunction) => {
         const data = req.body;
         const date = new Date();
+        
+        const timbangan = await getRepository(t_averyweight).findOne({no_tiket:data.no_tiket});
+        var selisih_netto, netto_from;
+        selisih_netto = Number(timbangan.selisih_netto);
+        netto_from = Number(timbangan.netto_from);
+        if (netto_from == null) {
+            netto_from = '0';
+        } else {
+            netto_from = netto_from;
+        }
+        const selisih_persen = (selisih_netto/netto_from*100).toString().slice(0,7);
+        
         try {
             const logs = await getRepository(t_jenis).create({
                 no_tiket: data.no_tiket,
@@ -263,8 +381,15 @@ class WBController{
                 keterangan: `Truck ${data.no_kendaraan} telah selesai timbang, check out by ${data.user_id}!`,
             });
 
+            await getConnection().createQueryBuilder().update(t_truksecurity).set({
+                waktu_keluartruk: new Date(),
+                no_locis:data.no_locis,
+                petugas_checkout: data.user_id
+            }).where("no_tiket = :no_tiket",{no_tiket:data.no_tiket}).execute();
+            
             await getConnection().createQueryBuilder().update(t_averyweight)
             .set({
+                selisih_netto_persen: selisih_persen,
                 status_truck: 2
             }).where("no_tiket = :no_tiket",{no_tiket:data.no_tiket}).execute();
             
@@ -272,6 +397,19 @@ class WBController{
             res.send({"code":200,"data":{"status":true,"msg":"Success. !"}});
         } catch (err) {
             res.send({"code":401,"data":{"status":false,"msg":"Failed. !"}});
+        }
+    }
+
+    static exportData = async (req:Request, res:Response, next:NextFunction) => {
+        const data = req.body;
+        try {
+            const exp = await getRepository(v_reportsecurity).createQueryBuilder()
+            .where("DATE(waktu_keluartruk) >= :start",{start:data.start})
+            .andWhere("DATE(waktu_keluartruk) <= :end",{end:data.end})
+            .getMany();
+            res.send({"code":200,"data":exp});
+        } catch (e) {
+            res.send({"code":401,"data":{"msg":"Data tidak ada!"}});
         }
     }
 
