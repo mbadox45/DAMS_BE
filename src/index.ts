@@ -3,14 +3,15 @@ import {createConnection} from "typeorm";
 import * as express from 'express';
 import * as BodyParser from 'body-parser';
 import * as cors from "cors";
-// import postRoutes from './routes/postRoutes';
-import AuthRoutes from './routes/auth';
-import ContractRoutes from './routes/contract';
-// import fileRoutes from './routes/files';
+
+// Router
+// import AuthRoutes from './routes/auth';
 import BarangRoutes from './routes/barang';
-import KendaraanRoutes from './routes/kendaraan';
-import WBRoutes from './routes/averyweight';
 import LogRoutes from './routes/log';
+
+// Controller
+import AuthController from "./controller/AuthController";
+import AgenController from "./controller/AgenController";
 
 createConnection().then(async connection => {
     
@@ -21,13 +22,11 @@ createConnection().then(async connection => {
     app.use(BodyParser.json());
 
     // AUTH
-    app.use('/auth',AuthRoutes);
+    app.use(new AuthController().router);
 
     // API
-    app.use('/api',ContractRoutes);
+    app.use(new AgenController().router);
     app.use('/api',BarangRoutes);
-    app.use('/api',KendaraanRoutes);
-    app.use('/api',WBRoutes);
     app.use('/api',LogRoutes);
 
     app.listen(port, () => console.log(`App berjalan di port ${port}`));

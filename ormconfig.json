@@ -1,10 +1,10 @@
 {
    "type": "postgres",
-   "host": "192.168.1.223",
+   "host": "localhost",
    "port": 5432,
    "username": "postgres",
-   "password": "Salvaco@21",
-   "database": "INL",
+   "password": "password",
+   "database": "pks",
    "synchronize": true,
    "logging": false,
    "entities": [
