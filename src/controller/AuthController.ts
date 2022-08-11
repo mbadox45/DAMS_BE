@@ -117,8 +117,8 @@ class AuthController implements IController{
                     const expiresIn = 60 * 60;
                     const secret = config.jwtSecret;
                     const dataStoredInToken = {id:user.id}
-                    const token = jwt.sign(dataStoredInToken,secret,{expiresIn})
-                    res.setHeader('Cookie', `token=${token}; HttpOnly; Max-Age=${expiresIn}`)
+                    const token = jwt.sign(dataStoredInToken,secret,{expiresIn: '24h'})
+                    res.setHeader('Cookie', `token=${token}; HttpOnly; Max-Age=24h`)
                     res.send({"code":200, "data":{"accessToken":token, "user":user}})
                 }else{
                     res.send({"code":505,"data":{"message":"Password Anda Salah"}});

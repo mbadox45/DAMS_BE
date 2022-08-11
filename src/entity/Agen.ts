@@ -16,4 +16,10 @@ export class t_agen {
 
     @Column({length:100, nullable:true})
     public img: string;
+
+    @Column({length:50, nullable:true})
+    public potongan: string;
+
+    @Column({nullable:true})
+    public potongan_tambahan: number;
 }

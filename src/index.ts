@@ -12,6 +12,10 @@ import LogRoutes from './routes/log';
 // Controller
 import AuthController from "./controller/AuthController";
 import AgenController from "./controller/AgenController";
+import KendaraanController from "./controller/KendaraanController";
+import MasterController from "./controller/MasterController";
+import TransaksiController from "./controller/TransaksiController";
+import CashflowController from "./controller/CashflowController";
 
 createConnection().then(async connection => {
     
@@ -26,6 +30,10 @@ createConnection().then(async connection => {
 
     // API
     app.use(new AgenController().router);
+    app.use(new MasterController().router);
+    app.use(new KendaraanController().router);
+    app.use(new TransaksiController().router);
+    app.use(new CashflowController().router);
     app.use('/api',BarangRoutes);
     app.use('/api',LogRoutes);
 
