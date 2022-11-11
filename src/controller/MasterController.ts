@@ -56,7 +56,8 @@ class MasterController implements IController{
 
         // Ongkos
         .get(`${this.path5}/all`, [checkJwt],this.getAllOngkos)
-        .get(`${this.path5}/all/:nopol/:pks`, [checkJwt],this.getOngkosByKendPKS)
+        .get(`${this.path5}/all/:nopol/:pks/:ongkos/:jenis`, [checkJwt],this.getOngkosByKendPKS)
+        .get(`${this.path5}/upah/:nopol/:pks/:ongkos/:jenis`, [checkJwt],this.getUpahByKendPKS)
         .post(`${this.path5}/all`, [checkJwt], this.postOngkos)
     }
 
@@ -365,8 +366,25 @@ class MasterController implements IController{
     private getOngkosByKendPKS = async (req:Request, res:Response, next:NextFunction) => {
         const post = req.params;
         try {
-            const ongkos = await getRepository(t_ongkos).findOne({id_kendaraan:post.nopol, id_pks:post.pks});
-            res.send({"code":200,"data":ongkos});
+            const ongkos = await getRepository(t_ongkos).findOne({id_kendaraan:post.nopol, id_pks:post.pks, jenis_upah:post.ongkos, jenis_transaksi:post.jenis});
+            const data = {'nominal':ongkos.nominal};
+            res.send({"code":200,"data":data});
+        } catch (error) {
+            res.send({"code":401,"data":{"status":false,"msg":"Failed!"}});
+        }
+    }
+    private getUpahByKendPKS = async (req:Request, res:Response, next:NextFunction) => {
+        const post = req.params;
+        try {
+            const ongkos = await getRepository(t_ongkos).findOne({id_kendaraan:post.nopol, id_pks:post.pks, jenis_upah:post.ongkos, jenis_transaksi:post.jenis});
+            var nominal;
+            if (ongkos == null) {
+                nominal = 0;
+            } else {
+                nominal = ongkos.nominal;
+            }
+            const data = {'nominal':nominal};
+            res.send({"code":200,"data":data});
         } catch (error) {
             res.send({"code":401,"data":{"status":false,"msg":"Failed!"}});
         }

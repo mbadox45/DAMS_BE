@@ -8,6 +8,9 @@ export class t_arus_kas {
     @Column({nullable:true, type:"date"})
     public tgl_transaksi: Date;
 
+    @Column({nullable:true, type:"date"})
+    public tgl_pelunasan: Date;
+
     @Column({length:50, nullable:true})
     public no_tiket: string;
 

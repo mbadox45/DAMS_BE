@@ -42,6 +42,7 @@ class TransactionController implements IController{
         // Penjualan
         .get(`${this.path3}/all`, [checkJwt], this.getPenjualan)
         .get(`${this.path3}/all/:id`, [checkJwt], this.getPenjualanByID)
+        .get(`${this.path3}/by/:status`, [checkJwt], this.getPenjualanByStatus)
         .post(`${this.path3}/start`,[checkJwt], this.postStartPenjualan)
         .post(`${this.path3}/pending`,[checkJwt], this.postPendingPenjualan)
         .post(`${this.path3}/payment`,[checkJwt], this.postPksPenjualan)
@@ -132,7 +133,6 @@ class TransactionController implements IController{
             res.send({"code":401,"msg":"Failed","status":false});
         }
     }
-
     private postSecondTransaction = async (req: Request, res: Response, next: NextFunction) => {
         const post = req.body;
         try {
@@ -268,6 +268,21 @@ class TransactionController implements IController{
             res.send({"code":401,"msg":"Failed","status":false});
         }
     }
+    private getPenjualanByStatus = async (req: Request, res: Response, next: NextFunction) => {
+        const post = req.params;
+        try {
+            const data = await getConnection().manager.query(`
+                SELECT t_penjualan.*, t_kendaraan.no_kendaraan, t_pks.nama_pks FROM t_penjualan
+                JOIN t_kendaraan ON t_penjualan.id_kendaraan = t_kendaraan.id 
+                JOIN t_pks ON t_penjualan.id_pks = t_pks.id
+                WHERE t_penjualan.status = '${post.status}' 
+            `);
+            // const data = await getRepository(t_pembelian).find();
+            res.send({"code":200,"data":data});
+        } catch (e) {
+            res.send({"code":401,"msg":"Failed","status":false});
+        }
+    }
     private postStartPenjualan = async (req: Request, res: Response, next: NextFunction) => {
         const post = req.body;
         const load = await getConnection().manager.query(`
@@ -338,10 +353,25 @@ class TransactionController implements IController{
                 status: 'payment',
                 usr_timbang3: post.user,
             }
-            const users = await getConnection().createQueryBuilder().update(t_penjualan).set(data)
-            .where("no_tiket = :id",{id:post.no_tiket}).execute();
-            // const users = await getRepository(t_penjualan).create(data);
-            // await getRepository(t_penjualan).save(users);
+
+            const data_stok = {
+                no_tiket: post.no_tiket,
+                tonase: post.netto_pks,
+                tgl_transaksi: post.tgl_transaksi,
+                jenis_buah: post.jenis_buah,
+                transaksi: 'penjualan',
+                harga: post.harga,
+                jumlah: post.jml_pembayaran
+            }
+
+            const stoks = await getRepository(t_stok).create(data_stok);
+            // const users = await getConnection().createQueryBuilder().update(t_penjualan).set(data)
+            // .where("no_tiket = :id",{id:post.no_tiket}).execute();
+
+            await getManager().transaction(async transactionalEntityManager => {
+                await transactionalEntityManager.createQueryBuilder().update(t_penjualan).set(data).where("no_tiket = :no_tiket",{no_tiket:post.no_tiket}).execute();
+                await transactionalEntityManager.save(stoks);
+            });
             res.send({"code":200,"msg":"Success","status":true});
         } catch (e) {
             res.send({"code":401,"msg":"Failed","status":false});

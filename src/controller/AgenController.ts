@@ -27,7 +27,7 @@ class AgenController implements IController{
         .get(`${this.path}/all/:id`, [checkJwt], this.getByIDAgen)
         .post(`${this.path}/all`, [checkJwt], this.postAgen)
         .post(`${this.path}/update`, [checkJwt], this.updateAgen)
-        .post(`${this.path}/delete`, [checkJwt], this.updateAgen)
+        .post(`${this.path}/delete`, [checkJwt], this.deleteAgen)
     }
 
     private getAllAgen = async (req:Request, res:Response, next:NextFunction) => {
@@ -115,6 +115,16 @@ class AgenController implements IController{
                 potongan_tambahan: post.potongan_tambahan,
             }
             const users = await getRepository(t_agen).create(data)
+            // console.log(id);
+            res.send({"code":200,"msg":"Success","status":true});
+        } catch (e) {
+            res.send({"code":401,"msg":"Failed","status":false});
+        }
+    }
+    private deleteAgen = async (req:Request, res:Response, next:NextFunction) => {
+        const post = req.body;
+        try {
+            const result = await getRepository(t_agen).delete({id_agen:post.id});
             // console.log(id);
             res.send({"code":200,"msg":"Success","status":true});
         } catch (e) {

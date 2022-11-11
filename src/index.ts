@@ -16,6 +16,7 @@ import KendaraanController from "./controller/KendaraanController";
 import MasterController from "./controller/MasterController";
 import TransaksiController from "./controller/TransaksiController";
 import CashflowController from "./controller/CashflowController";
+import PanjarPiutangController from "./controller/PanjarPiutangController";
 
 createConnection().then(async connection => {
     
@@ -34,6 +35,7 @@ createConnection().then(async connection => {
     app.use(new KendaraanController().router);
     app.use(new TransaksiController().router);
     app.use(new CashflowController().router);
+    app.use(new PanjarPiutangController().router);
     app.use('/api',BarangRoutes);
     app.use('/api',LogRoutes);
 

@@ -24,6 +24,7 @@ class AuthController implements IController{
     private routerMethod(){
         this.router
         .get(`${this.path}/all`, [checkJwt], this.getAllUser)
+        .get(`${this.path}/active`, [checkJwt], this.getAllUserByActive)
         .get(`${this.path}/all/:email`, [checkJwt], this.getByEmail)
         .get(`${this.path}/search/:search`, [checkJwt], this.getWhereUser)
         .post(`${this.path}/signin`, this.authSession)
@@ -37,6 +38,17 @@ class AuthController implements IController{
         try {
             // const id = res.locals.jwtPayload;
             const users = await getRepository(t_akun).find()
+            // console.log(id);
+            res.send({"code":200,"data":users});
+        } catch (e) {
+            res.send({"code":401,"data":{"msg":"Data tidak ada!"}});
+        }
+    }
+
+    private getAllUserByActive = async (req:Request, res:Response, next:NextFunction) => {
+        try {
+            // const id = res.locals.jwtPayload;
+            const users = await getRepository(t_akun).find({active:true})
             // console.log(id);
             res.send({"code":200,"data":users});
         } catch (e) {
